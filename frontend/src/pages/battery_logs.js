@@ -5,7 +5,7 @@
   "title": "班记抄表与见证",
   "module": "蓄电班记与测量",
   "caption": "蓄电班记与测量",
-  "detail": "抄表按电表编号和两日内小时保持唯一，未经确认的数据不进入周期拟合。",
+  "detail": "抄表按电表编号和两日内小时保持唯一，未经确认的数据不进入周期拟合；复核员可更正已审签读数，更正生效后用过该读数的旧预测立即失效。",
   "path": "/battery_logs",
   "columns": [
     {
@@ -31,6 +31,10 @@
     {
       "name": "verified",
       "label": "抄表审核"
+    },
+    {
+      "name": "revision",
+      "label": "更正版次"
     }
   ],
   "layout": "stack",
@@ -96,6 +100,36 @@
         "reviewer"
       ],
       "success": "已写入"
+    },
+    {
+      "name": "correct_meter",
+      "label": "更正已审签读数",
+      "path": "/battery_logs/correct-meter",
+      "fields": [
+        {
+          "name": "record",
+          "label": "抄表号",
+          "kind": "text",
+          "initial": "WH-RECHECK"
+        },
+        {
+          "name": "load_wh",
+          "label": "更正后用量 Wh",
+          "kind": "float",
+          "initial": 88.4
+        },
+        {
+          "name": "clear",
+          "label": "更正后晴天",
+          "kind": "bool",
+          "initial": true
+        }
+      ],
+      "help": "复核员更正后，用过该读数的旧预测立即失效；备播卡页面会标出待重算的卡，需用新预测另签新卡。",
+      "roles": [
+        "reviewer"
+      ],
+      "success": "已更正"
     }
   ]
 };

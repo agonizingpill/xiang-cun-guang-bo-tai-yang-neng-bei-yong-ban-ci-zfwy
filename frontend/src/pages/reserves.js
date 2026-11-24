@@ -31,6 +31,11 @@
     {
       "name": "token",
       "label": "计算号"
+    },
+    {
+      "name": "status",
+      "label": "评估状态",
+      "render": value => value === 'stale' ? '依据已失效·待重算' : '有效'
     }
   ],
   "layout": "split",

@@ -14,3 +14,10 @@ class LogCharge(BaseModel):
 class ApproveMeter(BaseModel):
     model_config = ConfigDict(extra="forbid")
     record: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=160)]
+
+
+class CorrectMeter(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    record: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=160)]
+    load_wh: FiniteFloat
+    clear: bool

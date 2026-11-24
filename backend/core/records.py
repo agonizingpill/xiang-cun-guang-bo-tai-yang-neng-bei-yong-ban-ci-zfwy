@@ -5,8 +5,8 @@ def need(condition, explanation):
     if not condition:
         raise HTTPException(409, detail=explanation)
 
-def get(conn, table, key, lock=False):
-    query = select(table).where(table.c.code == key)
+def get(conn, table, key, lock=False, field='code'):
+    query = select(table).where(table.c[field] == key)
     if lock:
         query = query.with_for_update()
     row = conn.execute(query).mappings().first()

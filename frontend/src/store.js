@@ -1,5 +1,5 @@
 export const ROLES = Object.freeze({operator: '作业员', reviewer: '复核员', viewer: '只读访客'});
-export const COMPUTE_STATES = Object.freeze({queued: '排队中', ready: '已计算', rejected: '计算被拒绝'});
+export const COMPUTE_STATES = Object.freeze({queued: '排队中', ready: '已计算', rejected: '计算被拒绝', stale: '依据已更正·已失效'});
 export function session() {
   try { return JSON.parse(sessionStorage.getItem('session')); } catch { return null; }
 }

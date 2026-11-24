@@ -8,12 +8,14 @@ export function dataView(rows, columns, layout) {
   if (layout === 'table') {
     return el('div', {class:'scroll'}, el('table', {},
       el('thead', {}, el('tr', {}, columns.map(x => el('th', {scope:'col'}, x.label)))),
-      el('tbody', {}, rows.map(r => el('tr', {}, columns.map(x => el('td', {}, display(r[x.name]))))))));
+      el('tbody', {}, rows.map(r => el('tr', r.basis_status === 'stale' ? {class:'stale-row'} : {},
+        columns.map(x => el('td', {}, x.render ? x.render(r[x.name], r) : display(r[x.name])))))));
   }
   return el('div', {class:'records ' + layout}, rows.map(row =>
-    el('article', {class:'record'}, el('h3',{},display(row[columns[0].name])),
+    el('article', {class:'record' + (row.basis_status === 'stale' ? ' stale-card' : '')},
+      el('h3',{},display(row[columns[0].name])),
       el('dl',{},columns.slice(1).flatMap(x => [
-        el('dt',{},x.label), el('dd',{},display(row[x.name]))])))));
+        el('dt',{},x.label), el('dd',{},x.render ? x.render(row[x.name], row) : display(row[x.name]))])))));
 }
 export function titleBlock(kicker, title, detail) {
   return el('header', {class:'title'}, el('span', {class:'kicker'}, kicker), el('h1', {}, title),

@@ -65,6 +65,10 @@ label span { display:block; color:var(--soft); font-size:.875em }
 @media(max-width:720px) { .shell,.welcome { display:block } nav { flex-direction:row; flex-wrap:wrap; border-right:0; border-bottom:1px solid var(--line) } nav a { border-left:0; border-bottom:2px solid transparent; padding:.35rem .5rem } .top { gap:.45rem } }
 @media(prefers-reduced-motion:reduce) { * { animation:none!important } }
 
+.stale-row td:last-child, .stale-card { color:oklch(45% .17 28); font-weight:650 }
+.stale-row { background:oklch(94% .05 28 / .55) }
+.stale-card { border-inline-start-color:oklch(45% .17 28); background:oklch(93% .06 28) }
+
 
 :root { --paper:oklch(91% .047 71); --sheet:oklch(96% .04 80); --accent:oklch(43% .11 50); }
 .shell {display:block} nav {flex-direction:row; padding:.7rem 3vw; border-bottom:3px double var(--line)}

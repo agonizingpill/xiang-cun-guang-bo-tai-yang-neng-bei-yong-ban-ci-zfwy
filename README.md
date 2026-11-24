@@ -7,9 +7,9 @@
 模拟客户为岭声乡村广播合作社。广播时刻表、蓄电日志、用量周期预测、备用机优先级；节目版权离线时段只能接本地时钟。
 
 - 节目时段表 `airslots`，字段为 `title`（节目）、`hour`（起播小时）、`license`（节目源许可）、`offline`（离线时段）。模型约束位于 `backend/domain/airslots_model.py`，规则位于 `airslots_service.py`。
-- 蓄电班记与测量 `battery_logs`，字段为 `meter`（电表编号）、`hour`（两日内整点）、`load_wh`（用量 Wh）、`clear`（天空晴）、`verified`（抄表审核）。模型约束位于 `backend/domain/battery_logs_model.py`，规则位于 `battery_logs_service.py`。
-- 备用分钟核算 `reserves`，字段为 `airslot`（节目时段）、`plan_wh`（计划备用 Wh）、`fallback`（备用源优先级）、`mae`（时间验证MAE Wh）、`token`（计算号）。模型约束位于 `backend/domain/reserves_model.py`，规则位于 `reserves_service.py`。
-- 班组备播卡 `switchcards`，字段为 `reserve`（备用评估）、`source`（实际时钟源）、`approved_wh`（锁定备用 Wh）、`state`（状态）。模型约束位于 `backend/domain/switchcards_model.py`，规则位于 `switchcards_service.py`。
+- 蓄电班记与测量 `battery_logs`，字段为 `meter`（电表编号）、`hour`（两日内整点）、`load_wh`（用量 Wh）、`clear`（天空晴）、`verified`（抄表审核）、`revision`（更正版次）。模型约束位于 `backend/domain/battery_logs_model.py`，规则位于 `battery_logs_service.py`。
+- 备用分钟核算 `reserves`，字段为 `airslot`（节目时段）、`plan_wh`（计划备用 Wh）、`fallback`（备用源优先级）、`mae`（时间验证MAE Wh）、`token`（计算号）、`status`（评估状态）。预测任务的读数血缘登记在 `forecast_runs`。模型约束位于 `backend/domain/reserves_model.py`，规则位于 `reserves_service.py`。
+- 班组备播卡 `switchcards`，字段为 `reserve`（备用评估）、`source`（实际时钟源）、`approved_wh`（锁定备用 Wh）、`state`（状态）、`basis_status`（预测依据，待重算时为 stale）。模型约束位于 `backend/domain/switchcards_model.py`，规则位于 `switchcards_service.py`。
 
 团队为模拟的6 人广播合作社值守组，负责两个电源档位的备播。
 
@@ -26,6 +26,15 @@
 5. 15:00 签发 RV-24 备用电量评估。
 6. 17:45 台外时钟请求被拦后改用本地时钟。
 7. 22:10 持 WR-77 完成闭台交接。
+
+### 读数更正与重算
+
+值守组发现已审签电量抄错时，由复核员在蓄电班记页提交更正（`/battery_logs/correct-meter`），版次 `revision` 累加：
+
+1. 更正一生效，`forecast_runs` 中用过该电表读数的旧预测全部标记失效（含 Redis 计算任务，排队中的任务算完也保持 `stale`）。
+2. 重算完成前，旧评估的备案、依据旧评估签发备播卡、以及未交接卡的闭台交接都会被拦下并返回 409。
+3. 更正与交接同时提交时，由行锁顺序决定：先交接成功的卡连同原预测依据留档、不再回退；先更正则交接被退回，备播卡标出“待重算”。
+4. 备播卡页面对待重算的卡高亮标注，复核员用更正后的读数重新预测、备案后可签发新卡并正常交接。
 
 ## 启动
 
@@ -52,11 +61,13 @@ Compose 运行 Nginx、Python FastAPI、独立 Redis 消费进程、SQL 数据�
 | 业务任务 | FastAPI 路由 | 页面 |
 |---|---|---|
 | 节目时段表 | `/airslots` /airslots/mark-offline | `frontend/src/pages/airslots.js` |
-| 蓄电班记与测量 | `/battery_logs` /battery_logs/log-charge，/battery_logs/approve-meter | `frontend/src/pages/battery_logs.js` |
+| 蓄电班记与测量 | `/battery_logs` /battery_logs/log-charge，/battery_logs/approve-meter，/battery_logs/correct-meter | `frontend/src/pages/battery_logs.js` |
 | 备用分钟核算 | `/reserves` /reserves/forecast-wh，/reserves/save-reserve | `frontend/src/pages/reserves.js` |
 | 班组备播卡 | `/switchcards` /switchcards/issue-switch，/switchcards/handover | `frontend/src/pages/switchcards.js` |
 
 SQL 实体与约束在 `backend/domain` 下维护。前端使用原生 ES modules。核心算子为 Fourier 基 + OLS。OLS 在训练时段拟合一、二阶谐波和晴天标记。备用量为截零后的点预测加末 6 小时 MAE。
+
+后端测试（SQLite + fakeredis，无需启动容器）：在 `backend` 目录安装 `requirements.txt`、pytest、fakeredis、httpx 后运行 `python -m pytest tests/`。
 
 按模拟广播班记推演。卡片供人工值守查阅，应用只处理纸本条件的数字记录。
 
